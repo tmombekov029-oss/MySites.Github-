@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Classic Auditing – Oracle Database</title>
+    <link rel="stylesheet" href="assets/css/style.css"/>
+</head>
+
+<body>
+
+<!-- Шапка -->
+<header class="header">
+    <div class="logo">Oracle Audit</div>
+    <div class="burger" onclick="toggleMenu()">☰</div>
+</header>
+
+<!-- Мобильное меню -->
+<nav id="mobileMenu" class="mobile-menu">
+    <a href="index.html">Главная</a>
+    <a href="overview.html">Обзор аудита</a>
+    <a href="unified.html">Unified Auditing</a>
+    <a href="fga.html">Fine-Grained Auditing</a>
+    <a class="active" href="classic.html">Classic Auditing</a>
+    <a href="tools.html">Инструменты</a>
+    <a href="examples.html">Примеры SQL</a>
+    <a href="contacts.html">Контакты</a>
+</nav>
+
+<main class="content">
+
+    <h1>Classic Auditing (Классический аудит Oracle)</h1>
+
+    <p>
+        <b>Классический аудит (Classic Auditing)</b> — это метод регистрации действий
+        пользователей, существующий в Oracle с ранних версий до появления Unified Auditing.
+        Он основан на таблицах <b>AUD$</b> и <b>FGA_LOG$</b>, а также на лог-файлах ОС.
+    </p>
+
+    <h2>Особенности классического аудита</h2>
+
+    <ul>
+        <li>Позволяет отслеживать DDL, DML, SELECT, системные привилегии</li>
+        <li>Записывает результаты в SYS.AUD$</li>
+        <li>Менее производительный, чем Unified Auditing</li>
+        <li>Не имеет политики — каждая команда AUDIT задаётся вручную</li>
+        <li>Может требовать purge/архивации логов</li>
+    </ul>
+
+    <h2>Архитектура Classic Auditing</h2>
+
+    <img src="assets/images/classic_audit_architecture.svg"
+         alt="Classic Auditing Architecture"
+         class="image-large"/>
+
+    <p>
+        Архитектура построена вокруг трёх компонентов:
+    </p>
+
+    <ul>
+        <li><b>AUD$</b> — основная таблица аудита</li>
+        <li><b>FGA_LOG$</b> — лог FGA (до Unified Auditing)</li>
+        <li><b>Параметры инициализации AUDIT_TRAIL</b></li>
+    </ul>
+
+    <h2>Параметр AUDIT_TRAIL</h2>
+
+    <p>Этот параметр управляет включением/выключением классического аудита.</p>
+
+    <table class="info-table">
+        <tr>
+            <th>Значение</th>
+            <th>Описание</th>
+        </tr>
+        <tr>
+            <td><b>NONE</b></td>
+            <td>Аудит выключен</td>
+        </tr>
+        <tr>
+            <td><b>DB</b></td>
+            <td>Писать в SYS.AUD$</td>
+        </tr>
+        <tr>
+            <td><b>DB,EXTENDED</b></td>
+            <td>Добавлять SQL-биндинги и текст</td>
+        </tr>
+        <tr>
+            <td><b>OS</b></td>
+            <td>Писать в файлы ОС</td>
+        </tr>
+        <tr>
+            <td><b>XML</b></td>
+            <td>Аудит в XML-файлы</td>
+        </tr>
+    </table>
+
+    <h2>Проверка включённого режима</h2>
+
+    <pre class="code">
+SHOW PARAMETER audit_trail;
+    </pre>
+
+    <h2>Пример включения классического аудита</h2>
+
+    <pre class="code">
+ALTER SYSTEM SET audit_trail='DB,EXTENDED' SCOPE=SPFILE;
+SHUTDOWN IMMEDIATE;
+STARTUP;
+    </pre>
+
+    <h2>AUDIT – основные команды</h2>
+
+    <h3>Аудит входов в систему</h3>
+    <pre class="code">
+AUDIT SESSION;
+    </pre>
+
+    <h3>Аудит действий администратора</h3>
+    <pre class="code">
+AUDIT ALTER SYSTEM;
+AUDIT CREATE USER;
+AUDIT DROP USER;
+    </pre>
+
+    <h3>Аудит операций с таблицами</h3>
+
+    <pre class="code">
+AUDIT INSERT, UPDATE, DELETE ON hr.employees;
+    </pre>
+
+    <h3>Аудит SELECT</h3>
+
+    <pre class="code">
+AUDIT SELECT ON hr.employees;
+    </pre>
+
+    <h2>Просмотр результатов Classic Auditing</h2>
+
+    <pre class="code">
+SELECT username,
+       action_name,
+       returncode,
+       obj_name,
+       timestamp
+FROM dba_audit_trail
+ORDER BY timestamp DESC;
+    </pre>
+
+    <h2>Пример реальной записи AUD$</h2>
+
+    <img src="assets/images/classic_sample_log.svg"
+         alt="Classic Audit Sample Record"
+         class="image-large"/>
+
+    <h2>Как очистить логи AUD$</h2>
+
+    <pre class="code">
+BEGIN
+    DBMS_AUDIT_MGMT.clean_audit_trail(
+        audit_trail_type => DBMS_AUDIT_MGMT.AUDIT_TRAIL_AUD_STD,
+        use_last_arch_timestamp => TRUE
+    );
+END;
+/
+    </pre>
+
+    <h2>Недостатки Classic Auditing</h2>
+
+    <ul>
+        <li>Низкая производительность</li>
+        <li>Большие объёмы данных в AUD$</li>
+        <li>Сложнее управлять</li>
+        <li>Нет централизованных политик (как в Unified)</li>
+    </ul>
+
+    <h2>Когда использовать Classic Auditing</h2>
+
+    <ul>
+        <li>Для старых версий Oracle до 12c</li>
+        <li>Если требуется совместимость со старыми приложениями</li>
+        <li>В режимах миграции к Unified Auditing</li>
+    </ul>
+
+    <p>
+        Несмотря на то что Classic Auditing считается устаревающим,
+        он по-прежнему работает в миллионах систем и является частью
+        базовой безопасности Oracle Database.
+    </p>
+
+</main>
+
+<script src="assets/js/script.js"></script>
+</body>
+</html>

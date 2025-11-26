@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Инструменты анализа аудита | Oracle Audit</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <script defer src="assets/js/menu.js"></script>
+</head>
+
+<body>
+<header class="header">
+    <div class="logo">Oracle Audit</div>
+
+    <button class="burger" id="burgerBtn">
+        <span></span><span></span><span></span>
+    </button>
+
+    <nav id="mobileMenu" class="mobile-menu">
+        <a href="index.html">Главная</a>
+        <a href="unified.html">Unified Auditing</a>
+        <a href="fga.html">Fine-Grained Auditing</a>
+        <a href="classic.html">Classic Auditing</a>
+        <a href="tools.html" class="active">Инструменты</a>
+        <a href="examples.html">Примеры SQL</a>
+        <a href="security.html">Рекомендации</a>
+        <a href="about.html">О проекте</a>
+    </nav>
+</header>
+
+<main class="content">
+    <h1>Инструменты анализа аудита в Oracle Database</h1>
+    <p>
+        Oracle предоставляет мощный набор инструментов для анализа, фильтрации, визуализации и 
+        экспорта данных аудита. Эти средства используются администраторами безопасности (DBA, SOC, 
+        аудиторы) для расследования действий пользователей и контроля соответствия политике.
+    </p>
+
+    <hr />
+
+    <section>
+        <h2>1. Oracle SQL Developer</h2>
+        <p>
+            Один из самых удобных клиентов для просмотра журналов аудита. Поддерживает поиск, 
+            фильтрацию, экспорт и визуальный просмотр таблиц аудита.
+        </p>
+
+        <img src="assets/images/sqldeveloper_audit.png" alt="Oracle SQL Developer Audit" class="img">
+
+        <h3>Плюсы:</h3>
+        <ul>
+            <li>Графический просмотр таблиц аудита</li>
+            <li>Эффективная фильтрация по датам, пользователям, операциям</li>
+            <li>Легкий экспорт CSV/Excel</li>
+        </ul>
+
+        <h3>Минусы:</h3>
+        <ul>
+            <li>Менее удобен для больших объёмов данных</li>
+            <li>Не всегда отображает бинарные данные (SQL_TEXT, SQL_BINDS)</li>
+        </ul>
+    </section>
+
+    <hr />
+
+    <section>
+        <h2>2. Oracle Enterprise Manager (OEM)</h2>
+        <p>
+            OEM — лучший инструмент для корпоративного мониторинга аудита.  
+            Позволяет смотреть отчёты в реальном времени, создавать предупреждения, собирать 
+            статистику по действиям пользователей.
+        </p>
+
+        <img src="assets/images/oem_audit_dashboard.png" alt="Oracle Enterprise Manager Audit" class="img">
+
+        <h3>Возможности:</h3>
+        <ul>
+            <li>Графические отчёты и дашборды</li>
+            <li>Мониторинг действий пользователей онлайн</li>
+            <li>Интеграция с SIEM-системами</li>
+            <li>Проверка политик безопасности</li>
+        </ul>
+    </section>
+
+    <hr />
+
+    <section>
+        <h2>3. Представления словаря данных</h2>
+        <p>
+            DBA чаще всего анализируют аудит с помощью SQL-запросов к системным таблицам.
+        </p>
+
+        <img src="assets/images/oracle_dictionary_views.png" alt="Oracle Dictionary Views" class="img">
+
+        <h3>К основным представлениям относятся:</h3>
+
+        <ul>
+            <li><strong>UNIFIED_AUDIT_TRAIL</strong> — всё про Unified Auditing</li>
+            <li><strong>DBA_FGA_AUDIT_TRAIL</strong> — журнал Fine-Grained Auditing</li>
+            <li><strong>DBA_AUDIT_TRAIL</strong> — классический аудит</li>
+            <li><strong>DBA_OBJ_AUDIT_OPTS</strong> — информация о политиках</li>
+            <li><strong>V$XML_AUDIT_TRAIL</strong> — данные в XML-формате</li>
+        </ul>
+
+        <h3>Пример SQL-запроса:</h3>
+
+<pre><code class="sql">
+SELECT event_timestamp, username, action_name, object_name, sql_text
+FROM unified_audit_trail
+WHERE username = 'SCOTT'
+ORDER BY event_timestamp DESC;
+</code></pre>
+
+    </section>
+
+    <hr />
+
+    <section>
+        <h2>4. Утилиты командной строки</h2>
+        <p>
+            Для автоматизации анализа в больших организациях применяются скрипты Bash/PowerShell,
+            которые подключаются к БД и выгружают журналы в SIEM или отчёты.
+        </p>
+
+        <img src="assets/images/cli_audit_tools.png" alt="CLI Tools for Oracle Audit" class="img">
+
+        <h3>Пример PowerShell сбора аудита:</h3>
+<pre><code class="powershell">
+$sql = "SELECT * FROM unified_audit_trail WHERE event_timestamp > SYSDATE - 1"
+Invoke-Sqlcmd -Query $sql -ServerInstance "oracle-host"
+</code></pre>
+
+    </section>
+
+    <hr />
+
+    <section>
+        <h2>5. Интеграция с SIEM</h2>
+        <p>
+            Большие компании передают журналы аудита в системы безопасности:
+        </p>
+
+        <ul>
+            <li>Splunk</li>
+            <li>ELK (Elasticsearch + Kibana)</li>
+            <li>QRadar</li>
+            <li>ArcSight</li>
+        </ul>
+
+        <img src="assets/images/siem_oracle_audit.png" alt="Oracle Audit SIEM Integration" class="img">
+
+        <p>
+            Это позволяет отслеживать подозрительную активность, аналитику поведения пользователей (UBA),
+            корреляцию событий и автоматические уведомления.
+        </p>
+    </section>
+
+</main>
+
+<footer class="footer">
+    <p>© 2025 Oracle Audit Project | Учебный сайт</p>
+</footer>
+
+</body>
+</html>

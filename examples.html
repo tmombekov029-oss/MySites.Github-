@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Примеры SQL | Oracle Audit</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <script defer src="assets/js/menu.js"></script>
+</head>
+
+<body>
+
+<header class="header">
+    <div class="logo">Oracle Audit</div>
+
+    <button class="burger" id="burgerBtn">
+        <span></span><span></span><span></span>
+    </button>
+
+    <nav id="mobileMenu" class="mobile-menu">
+        <a href="index.html">Главная</a>
+        <a href="unified.html">Unified Auditing</a>
+        <a href="fga.html">Fine-Grained Auditing</a>
+        <a href="classic.html">Classic Auditing</a>
+        <a href="tools.html">Инструменты</a>
+        <a href="examples.html" class="active">Примеры SQL</a>
+        <a href="security.html">Рекомендации</a>
+        <a href="about.html">О проекте</a>
+    </nav>
+</header>
+
+<main class="content">
+    <h1>Примеры SQL для аудита Oracle Database</h1>
+    <p>
+        На этой странице собраны реальные и наиболее часто используемые примеры SQL-запросов,
+        которые помогают администратору базы данных анализировать логи аудита, отслеживать действия
+        пользователей и выявлять подозрительные операции.
+    </p>
+
+    <hr/>
+
+    <!-- BLOCK 1 -->
+    <section>
+        <h2>1. Просмотр всех записей Unified Auditing</h2>
+
+        <img class="img" src="assets/images/sql_unified_audit.png" alt="Unified Audit SQL Example">
+
+<pre><code>
+SELECT event_timestamp,
+       username,
+       action_name,
+       object_schema,
+       object_name,
+       return_code,
+       sql_text
+FROM unified_audit_trail
+ORDER BY event_timestamp DESC;
+</code></pre>
+
+        <p>
+            Запрос отображает все события в журнале Unified Auditing: DML, DDL, логины,
+            сетевые подключения и операции над объектами.
+        </p>
+    </section>
+
+    <hr/>
+
+    <!-- BLOCK 2 -->
+    <section>
+        <h2>2. Фильтрация действий конкретного пользователя</h2>
+
+<pre><code>
+SELECT event_timestamp, action_name, object_name, sql_text
+FROM unified_audit_trail
+WHERE username = 'SCOTT'
+ORDER BY event_timestamp DESC;
+</code></pre>
+
+        <p>
+            Используется при расследовании активности определённого пользователя.
+        </p>
+    </section>
+
+    <hr/>
+
+    <!-- BLOCK 3 -->
+    <section>
+        <h2>3. Поиск ошибок доступа (ORA-01017, ORA-28000)</h2>
+
+        <img class="img" src="assets/images/ora_errors.png" alt="Oracle Access Errors">
+
+<pre><code>
+SELECT event_timestamp, username, return_code, os_username, userhost
+FROM unified_audit_trail
+WHERE return_code != 0
+ORDER BY event_timestamp DESC;
+</code></pre>
+
+        <p>Этот запрос показывает все события, которые завершились ошибками.</p>
+    </section>
+
+    <hr/>
+
+    <!-- BLOCK 4 -->
+    <section>
+        <h2>4. Поиск попыток просмотра конфиденциальных данных (FGA)</h2>
+
+        <img class="img" src="assets/images/fga_report.png" alt="FGA Example">
+
+<pre><code>
+SELECT event_timestamp,
+       db_user,
+       object_schema,
+       object_name,
+       sql_text,
+       policy_name
+FROM dba_fga_audit_trail
+ORDER BY event_timestamp DESC;
+</code></pre>
+
+        <p>
+            Используется для отслеживания запросов к полям с персональными или финансовыми данными.
+        </p>
+    </section>
+
+    <hr/>
+
+    <!-- BLOCK 5 -->
+    <section>
+        <h2>5. Отчёт по классическому аудиту</h2>
+
+<pre><code>
+SELECT username,
+       action_name,
+       obj_name,
+       timestamp,
+       sql_text
+FROM dba_audit_trail
+ORDER BY timestamp DESC;
+</code></pre>
+
+        <p>
+            Традиционный формат аудита — используется в старых версиях Oracle.
+        </p>
+    </section>
+
+    <hr/>
+
+    <!-- BLOCK 6 -->
+    <section>
+        <h2>6. Поиск операций ALTER, DROP, CREATE</h2>
+
+        <img class="img" src="assets/images/sql_ddl_report.png" alt="DDL Operations Audit">
+
+<pre><code>
+SELECT event_timestamp,
+       username,
+       action_name,
+       object_name,
+       sql_text
+FROM unified_audit_trail
+WHERE action_name IN ('ALTER TABLE', 'DROP TABLE', 'CREATE USER', 'DROP USER')
+ORDER BY event_timestamp DESC;
+</code></pre>
+
+        <p>
+            Помогает выявлять изменения схемы или вмешательство злоумышленников.
+        </p>
+    </section>
+
+    <hr/>
+
+    <!-- BLOCK 7 -->
+    <section>
+        <h2>7. Подключения и отключения пользователей</h2>
+
+<pre><code>
+SELECT event_timestamp,
+       username,
+       action_name,
+       userhost
+FROM unified_audit_trail
+WHERE action_name IN ('LOGON', 'LOGOFF')
+ORDER BY event_timestamp DESC;
+</code></pre>
+
+        <p>
+            Этот отчёт используется в SOC/ИБ для анализа активности учетных записей.
+        </p>
+    </section>
+
+
+    <hr/>
+
+    <!-- BLOCK 8 -->
+    <section>
+        <h2>8. Поиск DML-операций (INSERT / UPDATE / DELETE)</h2>
+
+<pre><code>
+SELECT event_timestamp, username, action_name, sql_text
+FROM unified_audit_trail
+WHERE action_name IN ('INSERT', 'UPDATE', 'DELETE')
+ORDER BY event_timestamp DESC;
+</code></pre>
+
+        <p>
+            Используется для анализа изменений данных и расследования инцидентов.
+        </p>
+    </section>
+
+    <hr/>
+
+    <!-- BLOCK 9 -->
+    <section>
+        <h2>9. Выгрузка аудита за последние 24 часа</h2>
+
+<pre><code>
+SELECT *
+FROM unified_audit_trail
+WHERE event_timestamp > SYSDATE - 1
+ORDER BY event_timestamp DESC;
+</code></pre>
+
+        <p>
+            Очень удобный ежедневный отчёт для администратора.
+        </p>
+    </section>
+
+    <hr/>
+
+    <!-- BLOCK 10 -->
+    <section>
+        <h2>10. Подсчет количества событий по типам</h2>
+
+<pre><code>
+SELECT action_name, COUNT(*) AS events
+FROM unified_audit_trail
+GROUP BY action_name
+ORDER BY events DESC;
+</code></pre>
+
+        <p>
+            Позволяет выявить тренды — например, массовые UPDATE или частые ошибки доступа.
+        </p>
+    </section>
+
+</main>
+
+<footer class="footer">
+    <p>© 2025 Oracle Audit Project | Учебный сайт</p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Fine-Grained Auditing (FGA) – Oracle Database</title>
+    <link rel="stylesheet" href="assets/css/style.css"/>
+</head>
+
+<body>
+
+<!-- Шапка и бургер -->
+<header class="header">
+    <div class="logo">Oracle Audit</div>
+    <div class="burger" onclick="toggleMenu()">☰</div>
+</header>
+
+<!-- Боковое мобильное меню -->
+<nav id="mobileMenu" class="mobile-menu">
+    <a href="index.html">Главная</a>
+    <a href="overview.html">Обзор аудита</a>
+    <a href="unified.html">Unified Auditing</a>
+    <a class="active" href="fga.html">Fine-Grained Auditing</a>
+    <a href="classic.html">Classic Auditing</a>
+    <a href="tools.html">Инструменты</a>
+    <a href="examples.html">Примеры SQL</a>
+    <a href="contacts.html">Контакты</a>
+</nav>
+
+<main class="content">
+
+    <h1>Fine-Grained Auditing (FGA)</h1>
+
+    <p>
+        <b>Fine-Grained Auditing (FGA)</b> — это механизм выборочного аудита,
+        который позволяет фиксировать не любое обращение к таблице, а только те запросы,
+        которые соответствуют определённым условиям.  
+        Это критически важно для систем, где нужно контролировать доступ к конфиденциальным данным:
+        зарплаты, личные данные, медицинские записи, финансовая информация.
+    </p>
+
+    <h2>Зачем нужен FGA?</h2>
+
+    <ul>
+        <li><b>Контроль доступа на уровне строк</b> таблицы (row-level audit)</li>
+        <li><b>Контроль доступа на уровне столбцов</b> (column-level audit)</li>
+        <li>Фиксация только чувствительных операций (например, где salary > 20000)</li>
+        <li>Поддержка DML и SELECT</li>
+        <li>Гибкая фильтрация аудит-событий</li>
+    </ul>
+
+    <h2>Архитектура FGA</h2>
+
+    <p>Ниже представлена визуальная схема обработки FGA:</p>
+
+    <img src="assets/images/scheme_fga.svg"
+         alt="FGA Architecture Diagram"
+         class="image-large"/>
+
+    <p>
+        FGA работает через пакет <b>DBMS_FGA</b>, где создаются политики,
+        которые определяют, какие запросы должны быть зааудированы.
+    </p>
+
+    <h2>Где хранятся лог FGA?</h2>
+
+    <ul>
+        <li><b>DBA_FGA_AUDIT_TRAIL</b> — главное представление для FGA</li>
+        <li><b>UNIFIED_AUDIT_TRAIL</b> — если используется Unified Auditing</li>
+    </ul>
+
+    <h2>Простейший пример политики FGA</h2>
+
+    <pre class="code">
+BEGIN
+    DBMS_FGA.add_policy(
+        object_schema   => 'HR',
+        object_name     => 'EMPLOYEES',
+        policy_name     => 'salary_select',
+        audit_column    => 'SALARY'
+    );
+END;
+/
+    </pre>
+
+    <h2>Пример: аудит только высоких зарплат</h2>
+
+    <pre class="code">
+BEGIN
+    DBMS_FGA.add_policy(
+        object_schema   => 'HR',
+        object_name     => 'EMPLOYEES',
+        policy_name     => 'high_salary',
+        audit_condition => 'salary > 20000',
+        audit_column    => 'SALARY'
+    );
+END;
+/
+    </pre>
+
+    <p>
+        Теперь запись произойдёт только если возвращается зарплата выше 20 000 —  
+        это экономит место и избавляет от ненужных записей.
+    </p>
+
+    <h2>Пример: аудит доступа к личным данным</h2>
+
+    <pre class="code">
+BEGIN
+    DBMS_FGA.add_policy(
+        object_schema        => 'HR',
+        object_name          => 'EMPLOYEES',
+        policy_name          => 'personal_data_access',
+        audit_column         => 'FIRST_NAME, LAST_NAME, EMAIL',
+        enable               => TRUE
+    );
+END;
+/
+    </pre>
+
+    <h2>Просмотр логов FGA</h2>
+
+    <pre class="code">
+SELECT event_timestamp,
+       db_user,
+       object_schema,
+       object_name,
+       sql_text
+FROM dba_fga_audit_trail
+ORDER BY event_timestamp DESC;
+    </pre>
+
+    <h2>Пример реальной записи FGA</h2>
+
+    <img src="assets/images/fga_sample_log.svg"
+         alt="FGA Audit Sample Record"
+         class="image-large"/>
+
+    <h2>Когда использовать FGA</h2>
+
+    <ul>
+        <li>Контроль доступа к персональным данным (ФИО, Email, адрес)</li>
+        <li>Аудит просмотра зарплат</li>
+        <li>Аудит медицинских данных</li>
+        <li>Аудит финансовых операций</li>
+        <li>Аудит действий администраторов</li>
+    </ul>
+
+    <h2>Преимущества FGA</h2>
+
+    <ul>
+        <li>Точный и выборочный аудит</li>
+        <li>Минимальная нагрузка на систему</li>
+        <li>Возможность настройки сложных условий</li>
+        <li>Поддержка Unified Auditing</li>
+    </ul>
+
+    <p>
+        <b>FGA</b> — один из главных инструментов безопасности Oracle,  
+        позволяющий отслеживать доступ именно к тем данным, которые действительно важны.
+    </p>
+
+</main>
+
+<script src="assets/js/script.js"></script>
+</body>
+</html>

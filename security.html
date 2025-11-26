@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Рекомендации по безопасности | Oracle Audit</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <script defer src="assets/js/menu.js"></script>
+</head>
+
+<body>
+
+<header class="header">
+    <div class="logo">Oracle Audit</div>
+
+    <button class="burger" id="burgerBtn">
+        <span></span><span></span><span></span>
+    </button>
+
+    <nav id="mobileMenu" class="mobile-menu">
+        <a href="index.html">Главная</a>
+        <a href="unified.html">Unified Auditing</a>
+        <a href="fga.html">Fine-Grained Auditing</a>
+        <a href="classic.html">Classic Auditing</a>
+        <a href="tools.html">Инструменты</a>
+        <a href="examples.html">Примеры SQL</a>
+        <a href="security.html" class="active">Рекомендации</a>
+        <a href="about.html">О проекте</a>
+    </nav>
+</header>
+
+<main class="content">
+
+    <h1>Рекомендации по безопасности Oracle Database</h1>
+    <p>
+        На этой странице представлены лучшие практики по настройке аудита, защите базы данных,
+        выявлению атак, защите администраторов и контролю действий пользователей. Материал подходит 
+        для DBA, инженеров ИБ, аналитиков SOC и студентов.
+    </p>
+
+    <img class="img" src="assets/images/security_overview.png" alt="Oracle Security Overview" />
+
+    <hr/>
+
+    <!-- BLOCK 1 -->
+    <section>
+        <h2>1. Используйте Unified Auditing (предпочтительно)</h2>
+
+        <p>
+            Unified Auditing — это современный механизм аудита Oracle. Он быстрее, безопаснее, 
+            поддерживает цифровые подписи, хранит данные в защищённом формате и централизует все 
+            события в одной таблице.
+        </p>
+
+        <img class="img" src="assets/images/unified_architecture.png" alt="Unified Auditing Architecture">
+
+<pre><code>
+SELECT action_name, COUNT(*) 
+FROM unified_audit_trail 
+GROUP BY action_name;
+</code></pre>
+
+        <p>
+            Рекомендуется отключить классический аудит, если он не нужен — это уменьшит дублирование данных.
+        </p>
+    </section>
+
+    <hr/>
+
+    <!-- BLOCK 2 -->
+    <section>
+        <h2>2. Включайте аудит входов и подозрительных действий</h2>
+
+        <img class="img" src="assets/images/login_fail.png" alt="Failed Logins">
+
+<pre><code>
+AUDIT LOGON;
+AUDIT ALTER USER;
+AUDIT DROP USER;
+AUDIT SYSTEM GRANT;
+</code></pre>
+
+        <p>
+            Это минимальный набор, который должен быть включён практически в любой организации.
+        </p>
+    </section>
+
+    <hr/>
+
+    <!-- BLOCK 3 -->
+    <section>
+        <h2>3. Используйте FGA для конфиденциальных данных</h2>
+
+        <p>
+            Fine-Grained Auditing позволяет отслеживать доступ к конкретным строкам и столбцам, 
+            например: паспортные данные, зарплаты, персональные данные.
+        </p>
+
+        <img class="img" src="assets/images/fga_policy_example.png" alt="FGA Policy Example">
+
+<pre><code>
+BEGIN
+  DBMS_FGA.add_policy(
+    object_schema => 'HR',
+    object_name   => 'EMPLOYEES',
+    policy_name   => 'SALARY_SELECT',
+    audit_column  => 'SALARY'
+  );
+END;
+/
+</code></pre>
+
+        <p>
+            Это значительно повышает безопасность и помогает соответствовать стандартам GDPR/PCI DSS.
+        </p>
+    </section>
+
+    <hr/>
+
+    <!-- BLOCK 4 -->
+    <section>
+        <h2>4. Ограничьте доступ к журналам аудита</h2>
+
+        <p>
+            Доступ к таблицам аудита должен быть только у роли <strong>AUDIT_ADMIN</strong> или у ограниченного круга администраторов.
+        </p>
+
+<pre><code>
+REVOKE SELECT ON unified_audit_trail FROM PUBLIC;
+</code></pre>
+
+        <p>
+            Это предотвратит попытки скрыть следы активности.
+        </p>
+    </section>
+
+    <hr/>
+
+    <!-- BLOCK 5 -->
+    <section>
+        <h2>5. Настройте защиту от атак (bruteforce)</h2>
+
+        <img class="img" src="assets/images/bruteforce.png" alt="Bruteforce Attack Oracle">
+
+<pre><code>
+ALTER PROFILE DEFAULT LIMIT FAILED_LOGIN_ATTEMPTS 5;
+ALTER PROFILE DEFAULT LIMIT PASSWORD_LOCK_TIME 1;
+</code></pre>
+
+        <p>
+            Это предотвратит подбор пароля и позволит быстро заблокировать нарушителя.
+        </p>
+    </section>
+
+    <hr/>
+
+    <!-- BLOCK 6 -->
+    <section>
+        <h2>6. Включите аудит критичных таблиц</h2>
+
+<pre><code>
+AUDIT SELECT, INSERT, UPDATE, DELETE ON hr.employees;
+AUDIT SELECT ON credit.cards;
+</code></pre>
+
+        <p>
+            Особенно важно включать аудит в HR, финансовых и клиентских таблицах.
+        </p>
+    </section>
+
+    <hr/>
+
+    <!-- BLOCK 7 -->
+    <section>
+        <h2>7. Используйте SIEM для анализа аудита</h2>
+
+        <img class="img" src="assets/images/siem_dashboard.png" alt="Oracle SIEM Integration">
+
+        <ul>
+            <li>QRadar</li>
+            <li>Splunk</li>
+            <li>ELK (Elasticsearch + Kibana)</li>
+            <li>ArcSight</li>
+        </ul>
+
+        <p>
+            SIEM позволяет автоматически выявлять аномалии в поведении пользователей.
+        </p>
+    </section>
+
+    <hr/>
+
+    <!-- BLOCK 8 -->
+    <section>
+        <h2>8. Регулярно очищайте и архивируйте аудит</h2>
+
+<pre><code>
+DELETE FROM unified_audit_trail WHERE event_timestamp < SYSDATE - 90;
+</code></pre>
+
+        <p>
+            Большие журналы нагружают базу данных. Рекомендуется хранить их не более 3–6 месяцев.
+        </p>
+    </section>
+
+    <hr/>
+
+    <!-- BLOCK 9 -->
+    <section>
+        <h2>9. Мониторинг подозрительного SQL</h2>
+
+        <img class="img" src="assets/images/sql_monitor.png" alt="Suspicious SQL Monitoring">
+
+<pre><code>
+SELECT username, sql_text, event_timestamp 
+FROM unified_audit_trail
+WHERE sql_text LIKE '%DROP%' 
+   OR sql_text LIKE '%ALTER%'
+ORDER BY event_timestamp DESC;
+</code></pre>
+
+        <p>
+            Такой отчёт используют аналитики безопасности для выявления угроз.
+        </p>
+    </section>
+
+</main>
+
+<footer class="footer">
+    <p>© 2025 Oracle Audit Project | Учебный сайт</p>
+</footer>
+
+</body>
+</html>

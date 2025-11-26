@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Unified Auditing – Oracle Database</title>
+    <link rel="stylesheet" href="assets/css/style.css"/>
+</head>
+
+<body>
+
+<!-- Мобильное меню -->
+<header class="header">
+    <div class="logo">Oracle Audit</div>
+    <div class="burger" onclick="toggleMenu()">☰</div>
+</header>
+
+<nav id="mobileMenu" class="mobile-menu">
+    <a href="index.html">Главная</a>
+    <a href="overview.html">Обзор аудита</a>
+    <a class="active" href="unified.html">Unified Auditing</a>
+    <a href="fga.html">Fine-Grained Auditing</a>
+    <a href="classic.html">Classic Auditing</a>
+    <a href="tools.html">Инструменты</a>
+    <a href="examples.html">Примеры SQL</a>
+    <a href="contacts.html">Контакты</a>
+</nav>
+
+<main class="content">
+
+    <h1>Unified Auditing в Oracle Database</h1>
+
+    <p>
+        <b>Unified Auditing</b> — это новая архитектура аудита Oracle, введённая начиная с Oracle Database 12c.
+        Она объединяет все типы аудита в единую централизованную подсистему.  
+        В отличие от классического аудита, данные записываются не в SYS.AUD$, а в
+        <b>UNIFIED_AUDIT_TRAIL</b>, обеспечивая лучшую производительность и безопасность.
+    </p>
+
+    <h2>Основные преимущества Unified Auditing</h2>
+
+    <ul>
+        <li><b>Высокая производительность</b> — минимальная нагрузка на ядро БД.</li>
+        <li><b>Централизованность</b> — один набор представлений и настроек.</li>
+        <li><b>Неразделяемость</b> (tamper-resistant) — повышенная защита логов.</li>
+        <li><b>Интеграция</b> со всеми механизмами: FGA, RMAN, Datapump, Label Security.</li>
+        <li><b>Поддержка политик</b>, а не отдельных команд AUDIT.</li>
+    </ul>
+
+    <h2>Архитектура Unified Auditing</h2>
+
+    <p>Ниже представлена схема механизмов Unified Auditing:</p>
+
+    <img src="assets/images/unified_architecture.svg"
+         alt="Unified Auditing Architecture"
+         class="image-large"/>
+
+    <p>
+        Когда пользователь выполняет действие, оно обрабатывается в Oracle Kernel,
+        анализируется в Audit Component, после чего результат попадает в:
+    </p>
+
+    <ul>
+        <li><b>Audit Buffer</b> — временное хранилище;</li>
+        <li><b>UNIFIED_AUDIT_TRAIL</b> — конечное место хранения.</li>
+    </ul>
+
+    <h2>Где хранится Unified Audit Trail?</h2>
+    <p>
+        Основные представления:
+    </p>
+
+    <ul>
+        <li><b>UNIFIED_AUDIT_TRAIL</b> — основная таблица аудита;</li>
+        <li><b>DBA_AUDIT_OBJECT</b> — действия над объектами;</li>
+        <li><b>DBA_AUDIT_TRAIL</b> — представление для совместимости.</li>
+    </ul>
+
+    <h2>Как включить Unified Auditing</h2>
+
+    <p>
+        Unified Auditing может работать в двух режимах:
+    </p>
+
+    <ul>
+        <li><b>Mixed Mode</b> — по умолчанию (классический аудит тоже работает);</li>
+        <li><b>Pure Mode</b> — только Unified Auditing.</li>
+    </ul>
+
+    <h2>Пример включения политики</h2>
+
+    <pre class="code">
+CREATE AUDIT POLICY logins
+    ACTIONS LOGON;
+
+AUDIT POLICY logins;
+    </pre>
+
+    <h2>Проверка записей Unified Auditing</h2>
+
+    <pre class="code">
+SELECT event_timestamp,
+       dbusername,
+       action_name,
+       return_code
+FROM unified_audit_trail
+ORDER BY event_timestamp DESC;
+    </pre>
+
+    <h2>Пример аудита операций SELECT на таблице</h2>
+
+    <pre class="code">
+CREATE AUDIT POLICY emp_select
+    ACTIONS SELECT ON hr.employees;
+
+AUDIT POLICY emp_select;
+    </pre>
+
+    <h2>Реальный пример записи Unified Auditing</h2>
+
+    <img src="assets/images/unified_sample_log.svg"
+         alt="Пример записи Unified Audit Trail"
+         class="image-large"/>
+
+    <h2>Совместимость и особенности</h2>
+
+    <p>
+        При использовании Unified Auditing классические таблицы AUD$ могут быть пустыми —
+        вся информация уходит в новые представления.
+    </p>
+
+    <p>
+        Также уменьшается нагрузка на redo/undo, что хорошо для высоконагруженных систем.
+    </p>
+
+    <h2>Что рекомендуется включить</h2>
+
+    <ul>
+        <li>Аудит успешных и неудачных входов</li>
+        <li>Аудит привилегированных действий</li>
+        <li>Аудит выполнения DDL</li>
+        <li>Аудит доступа к конфиденциальным данным</li>
+    </ul>
+
+    <p><b>Unified Auditing — это стандарт аудита Oracle будущего.</b></p>
+
+</main>
+
+<script src="assets/js/script.js"></script>
+</body>
+</html>
